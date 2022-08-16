@@ -25,3 +25,9 @@ fn find_matches<R: BufRead>(content: R, pattern: &str) {
         }
     }
 }
+
+#[test]
+fn test_find_matches() {
+    let content = "test".as_bytes();
+    find_matches(content, "awesome");
+}
