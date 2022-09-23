@@ -1,7 +1,10 @@
 #![allow(unused)]
 
 use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 use clap::Parser;
+use anyhow::{Context, Result};
+use grrs::find_matches;
 
 #[derive(Parser)]
 struct Cli {
@@ -9,25 +12,20 @@ struct Cli {
     path: std::path::PathBuf,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = Cli::parse();
-    let file = std::fs::File::open(&args.path).expect("could not read file");
+    let file = std::fs::File::open(&args.path)
+        .with_context(|| format!("could not read file `{}`", args.path.to_str().unwrap()))?;
     let content = BufReader::new(file);
 
-    find_matches(content, &args.pattern);
-}
-
-fn find_matches<R: BufRead>(content: R, pattern: &str) {
-    for line in content.lines() {
-        let l = line.expect("Unable to read line");
-        if l.contains(pattern) {
-            println!("{}", l);
-        }
-    }
+    grrs::find_matches(content, &args.pattern, &mut std::io::stdout());
+    Ok(())
 }
 
 #[test]
 fn test_find_matches() {
-    let content = "test".as_bytes();
-    find_matches(content, "awesome");
+    let content = "lorem ipsum\ndolor sit amet".as_bytes();
+    let mut result = Vec::new();
+    find_matches(content, "lorem", &mut result);
+    assert_eq!(result, b"lorem ipsum\n");
 }
